@@ -2,7 +2,15 @@
 #
 # Exercise 2.4
 import csv
-from price import read_prices
+import sys
+from fileparse import parse_csv
+
+def read_prices(filename):    
+    '''Read stock prices from a csv format file'''
+    with open(filename, 'rt') as f:
+        priceslist=parse_csv(f,types=[str,float],has_headers=False)
+    return dict(priceslist)
+
 def read_portfolio_as_list(filename):
     '''Read portfolio info from a csv format file'''
     portfolio = []
@@ -18,16 +26,8 @@ def read_portfolio_as_list(filename):
 
 def read_portfolio_as_dict(filename):
     '''Read portfolio info from a csv format file'''
-    portfolio = []
     with open(filename, 'rt') as f:
-        rows = csv.reader(f)
-        headers=next(rows)
-        select=['name','shares','price']
-        indices=[headers.index(colname) for colname in select]
-        try:
-            portfolio=[{colname: row[index] if colname=='name' else int(row[index]) if colname=='shares' else float(row[index]) for colname, index in zip(select, indices)} for row in rows]
-        except ValueError:
-            print('Error Format: ', row)
+        portfolio = parse_csv(f,select=['name','shares','price'],types=[str,int,float])
     return portfolio
 
 def report_gain_or_loss(portfolioFile, priceFile):
@@ -56,7 +56,14 @@ def print_report(report):
     for name, shares, price, change in report:
         print(f'{name:>10s} {shares:>10d} {price:>10.2f} {change:>10.2f}')
 
-portfolio = read_portfolio_as_dict('Data/portfoliodate.csv')
-prices = read_prices('Data/prices.csv')
-report = make_report(portfolio,prices)
-print_report(report)
+def main(argv):
+    portfolio = read_portfolio_as_dict(argv[1])
+    prices = read_prices(argv[2])
+    report = make_report(portfolio,prices)
+    print_report(report)
+
+if __name__ == '__main__':
+    if len(sys.argv) != 3:
+        raise SystemExit(f'Usage: {sys.argv[0]:s} portfoliofile pricefile')
+    else:
+        main(sys.argv)
